@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:map/screens/map_screen.dart';
 
-
 void main() {
   runApp(const GoogleMap());
 }

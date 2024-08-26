@@ -98,7 +98,7 @@ class _MapScreenState extends State<MapScreen> {
         title: const Text(
           'Real-Time Location Tracker',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
       ),

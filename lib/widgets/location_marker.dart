@@ -7,7 +7,7 @@ class LocationMarker extends Marker {
     required String infoTitle,
     required String infoSnippet,
   }) : super(
-    markerId: MarkerId(markerId),
-    infoWindow: InfoWindow(title: infoTitle, snippet: infoSnippet),
-  );
+          markerId: MarkerId(markerId),
+          infoWindow: InfoWindow(title: infoTitle, snippet: infoSnippet),
+        );
 }
