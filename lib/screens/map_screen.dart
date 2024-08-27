@@ -25,18 +25,21 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
   }
 
+  // Updates the current location
   void _updateLocation(Position position) {
     setState(() {
       _lastPosition = LatLng(position.latitude, position.longitude);
     });
   }
 
+  // Sets the destination on the map
   void _setDestination(LatLng destination) {
     setState(() {
       _destinationPosition = destination;
     });
   }
 
+  // Updates the distance and estimated time display
   void _updateDistanceAndTime(String distance, String duration) {
     setState(() {
       _distance = distance;

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:map/services/location_service.dart';
 
 class MapView extends StatefulWidget {
@@ -33,6 +33,7 @@ class _MapViewState extends State<MapView> {
   final List<LatLng> _polylineCoordinates = [];
   late Timer _locationUpdateTimer;
   MapType _currentMapType = MapType.normal; // Default map type
+  bool _isMapLoaded = false; // Flag to check if map is loaded
 
   @override
   void initState() {
@@ -43,15 +44,32 @@ class _MapViewState extends State<MapView> {
   /// Initializes location tracking by fetching the current location and setting up a timer.
   void _initializeLocationTracking() async {
     Position position = await _locationService.getCurrentLocation();
-    widget.onLocationUpdated(position);
-    _addMarker(position, 'currentLocation');
+    _updateCurrentLocation(position);
 
     _locationUpdateTimer =
         Timer.periodic(const Duration(seconds: 10), (timer) async {
       Position newPosition = await _locationService.getCurrentLocation();
-      widget.onLocationUpdated(newPosition);
-      _updateCurrentLocationMarker(newPosition);
+      _updateCurrentLocation(newPosition);
     });
+  }
+
+  /// Updates the current location and adds a marker for it.
+  void _updateCurrentLocation(Position position) {
+    LatLng newPosition = LatLng(position.latitude, position.longitude);
+    widget.onLocationUpdated(position);
+
+    setState(() {
+      _addMarker(position, 'currentLocation');
+      _polylineCoordinates.add(newPosition);
+      _updatePolyline();
+    });
+
+    if (!_isMapLoaded) {
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngZoom(newPosition, 14),
+      );
+      _isMapLoaded = true;
+    }
   }
 
   /// Adds a marker at the given position on the map.
@@ -67,25 +85,21 @@ class _MapViewState extends State<MapView> {
     );
 
     setState(() {
+      _markers.removeWhere((m) => m.markerId.value == markerId);
       _markers.add(marker);
     });
   }
 
-  /// Updates the current location marker on the map.
-  void _updateCurrentLocationMarker(Position position) {
-    final updatedMarker = Marker(
-      markerId: const MarkerId('currentLocation'),
-      position: LatLng(position.latitude, position.longitude),
-      infoWindow: InfoWindow(
-        title: 'My current location',
-        snippet: '${position.latitude}, ${position.longitude}',
-      ),
-    );
-
+  /// Updates the polyline as the user's location changes.
+  void _updatePolyline() {
     setState(() {
-      _markers
-          .removeWhere((marker) => marker.markerId.value == 'currentLocation');
-      _markers.add(updatedMarker);
+      _polylines.clear();
+      _polylines.add(Polyline(
+        polylineId: const PolylineId('trackingPolyline'),
+        points: _polylineCoordinates,
+        color: Colors.blue,
+        width: 5,
+      ));
     });
   }
 
@@ -119,7 +133,7 @@ class _MapViewState extends State<MapView> {
       PolylinePoints polylinePoints = PolylinePoints();
       polylinePoints
           .getRouteBetweenCoordinates(
-        'AIzaSyDkL97pRmF-wXpbd7qjTvvBE2XagjwsR4Y', // Your Google Maps API Key
+        'AIzaSyDkL97pRmF-wXpbd7qjTvvBE2XagjwsR4Y', // Google Maps API Key
         PointLatLng(
             widget.lastPosition!.latitude, widget.lastPosition!.longitude),
         PointLatLng(widget.destinationPosition!.latitude,
@@ -195,7 +209,7 @@ class _MapViewState extends State<MapView> {
           },
           initialCameraPosition: CameraPosition(
             target: widget.lastPosition ??
-                const LatLng(0, 0), // Default starting position
+                const LatLng(0, 0),
             zoom: 14,
           ),
           markers: _markers,
@@ -208,7 +222,7 @@ class _MapViewState extends State<MapView> {
           },
         ),
         Positioned(
-          bottom: 80,
+          bottom: 40,
           left: 10,
           child: FloatingActionButton(
             onPressed: _toggleMapType,
